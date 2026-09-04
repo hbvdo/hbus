@@ -8,12 +8,13 @@ const redis = new Redis({
 export default async function handler(req, res) {
   const { path } = req.query;
 
-  // Static HTML বা মূল পেজ যেন ব্লক না হয়
+  // Root বা index.html রিকোয়েস্ট এলে ফাঁকা রেসপন্স
   if (!path || path === 'index.html') {
     return res.status(200).end();
   }
 
   try {
+    // Redis ডাটাবেস থেকে শর্ট আইডির ডাটা খোঁজা
     const rawData = await redis.get(path);
     if (!rawData) {
       return res.status(404).send('Short Link Not Found');
@@ -22,26 +23,17 @@ export default async function handler(req, res) {
     const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
     const userAgent = req.headers['user-agent'] || '';
 
+    // ১. সোশ্যাল মিডিয়া স্ক্র্যাপার বট সনাক্তকরণ
     const isBot = /facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|skypeuripreview|discordbot/i.test(userAgent);
 
+    // ২. বট হলে সরাসরি ইমেজ URL-এ রিডাইরেক্ট (Domain Spoofing-এর জন্য)
     if (isBot) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.status(200).send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta property="og:site_name" content="${data.imageDomain}">
-            <meta property="og:title" content="${data.metaTitle}">
-            <meta property="og:description" content="${data.metaDescription}">
-            <meta property="og:image" content="${data.imageUrl}">
-            <meta name="twitter:card" content="summary_large_image">
-          </head>
-          <body></body>
-        </html>
-      `);
+      return res.redirect(302, data.imageUrl);
     }
 
+    // ৩. মানব ব্যবহারকারী হলে মূল Destination URL-এ রিডাইরেক্ট
     return res.redirect(302, data.mainUrl);
+
   } catch (err) {
     return res.status(500).send('Server Error');
   }
