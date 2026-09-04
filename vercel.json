@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/shorten", "destination": "/api/shorten.js" },
+    { "source": "/:path*", "destination": "/api/redirect.js" }
+  ]
+}
