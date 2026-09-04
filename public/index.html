@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Link Cloaker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-lg">
+    <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">HB Link Shortener & Cloaker</h1>
+    <form id="shortenForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Target URL (Main Link) *</label>
+        <input type="url" id="mainUrl" required placeholder="https://your-destination.com" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Meta Title (Optional)</label>
+        <input type="text" id="metaTitle" placeholder="Custom Title" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Meta Description (Optional)</label>
+        <input type="text" id="metaDescription" placeholder="Custom Description" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Image Link (Imgur, ImgBB, etc.) *</label>
+        <input type="url" id="imageUrl" required placeholder="https://i.imgur.com/example.jpg" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+      </div>
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700">Shorten Link</button>
+    </form>
+
+    <div id="result" class="mt-6 hidden p-4 bg-gray-50 border rounded-md">
+      <p class="text-sm text-gray-600">Your Short Link:</p>
+      <div class="flex items-center gap-2 mt-1">
+        <input type="text" id="shortUrlOutput" readonly class="w-full p-2 bg-white border rounded text-blue-600 font-semibold">
+        <button onclick="copyLink()" class="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        mainUrl: document.getElementById('mainUrl').value,
+        metaTitle: document.getElementById('metaTitle').value,
+        metaDescription: document.getElementById('metaDescription').value,
+        imageUrl: document.getElementById('imageUrl').value
+      };
+
+      const res = await fetch('/api/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.shortUrl) {
+        document.getElementById('shortUrlOutput').value = data.shortUrl;
+        document.getElementById('result').classList.remove('hidden');
+      }
+    });
+
+    function copyLink() {
+      const copyText = document.getElementById("shortUrlOutput");
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("Link copied!");
+    }
+  </script>
+</body>
+</html>
